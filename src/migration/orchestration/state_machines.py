@@ -349,10 +349,18 @@ def rollback_state_machine(
 
 
 def emit_all_state_machines(output_dir: str) -> None:
-    """Emit all three state machine definitions as JSON files (used by Terraform)."""
+    """Emit all three state machine definitions as JSON files (used by Terraform).
+
+    NOTE: Terraform's `templatefile()` function treats `$$` as an escape sequence
+    that outputs a literal `$`. Step Functions uses `$$.Foo` to reference the
+    context object (e.g., `$$.State.EnteredTime`). Without escaping, templatefile
+    would turn `$$.State.EnteredTime` into `$.State.EnteredTime` which is wrong.
+
+    We emit `$$$$` in the JSON files so templatefile produces correct `$$`.
+    """
     os.makedirs(output_dir, exist_ok=True)
 
-    # Use placeholder values — Terraform will substitute
+    # Use placeholder values -- Terraform will substitute
     placeholders = {
         "glue_extract_job": "${glue_extract_job}",
         "glue_load_job": "${glue_load_job}",
@@ -363,38 +371,42 @@ def emit_all_state_machines(output_dir: str) -> None:
         "migrate_table_state_machine_arn": "${migrate_table_state_machine_arn}",
     }
 
+    def _escape_templatefile_literals(s: str) -> str:
+        """Escape $$ to $$$$ so templatefile preserves them as $$."""
+        return s.replace("$$", "$$$$")
+
+    migrate_table_json = json.dumps(
+        migrate_single_table_state_machine(
+            placeholders["glue_extract_job"],
+            placeholders["glue_load_job"],
+            placeholders["databricks_reconciliation_job_id"],
+            placeholders["idempotency_table"],
+            placeholders["sns_topic_arn"],
+        ),
+        indent=2,
+    )
     with open(f"{output_dir}/migrate_table.asl.json", "w") as f:
-        json.dump(
-            migrate_single_table_state_machine(
-                placeholders["glue_extract_job"],
-                placeholders["glue_load_job"],
-                placeholders["databricks_reconciliation_job_id"],
-                placeholders["idempotency_table"],
-                placeholders["sns_topic_arn"],
-            ),
-            f,
-            indent=2,
-        )
+        f.write(_escape_templatefile_literals(migrate_table_json))
 
+    batch_migrate_json = json.dumps(
+        batch_migrate_state_machine(
+            placeholders["migrate_table_state_machine_arn"]
+        ),
+        indent=2,
+    )
     with open(f"{output_dir}/batch_migrate.asl.json", "w") as f:
-        json.dump(
-            batch_migrate_state_machine(
-                placeholders["migrate_table_state_machine_arn"]
-            ),
-            f,
-            indent=2,
-        )
+        f.write(_escape_templatefile_literals(batch_migrate_json))
 
+    rollback_json = json.dumps(
+        rollback_state_machine(
+            placeholders["idempotency_table"],
+            placeholders["rollback_glue_job"],
+            placeholders["sns_topic_arn"],
+        ),
+        indent=2,
+    )
     with open(f"{output_dir}/rollback.asl.json", "w") as f:
-        json.dump(
-            rollback_state_machine(
-                placeholders["idempotency_table"],
-                placeholders["rollback_glue_job"],
-                placeholders["sns_topic_arn"],
-            ),
-            f,
-            indent=2,
-        )
+        f.write(_escape_templatefile_literals(rollback_json))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,43 @@
+{
+  "Comment": "Rollback a failed or problematic migration batch",
+  "StartAt": "ConfirmRollbackRequested",
+  "States": {
+    "ConfirmRollbackRequested": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Parameters": {
+        "TableName": "${idempotency_table}",
+        "Key": {
+          "pk": {
+            "S.$": "States.Format('batch#migrate-table#{}', $.batch_id)"
+          }
+        }
+      },
+      "ResultPath": "$.batch_record",
+      "Next": "ExecuteRollback"
+    },
+    "ExecuteRollback": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${rollback_glue_job}",
+        "Arguments": {
+          "--batch_id.$": "$.batch_id",
+          "--strategy.$": "$.rollback_strategy"
+        }
+      },
+      "ResultPath": "$.rollback_result",
+      "Next": "NotifyRollback"
+    },
+    "NotifyRollback": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${sns_topic_arn}",
+        "Subject.$": "States.Format('[SAP Migration] ROLLED BACK: {}', $.batch_id)",
+        "Message.$": "$"
+      },
+      "End": true
+    }
+  }
+}

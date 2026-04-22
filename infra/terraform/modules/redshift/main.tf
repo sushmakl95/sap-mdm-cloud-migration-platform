@@ -67,7 +67,7 @@ resource "aws_redshift_cluster" "this" {
   cluster_type                 = var.number_of_nodes > 1 ? "multi-node" : "single-node"
   cluster_subnet_group_name    = aws_redshift_subnet_group.this.name
   vpc_security_group_ids       = [aws_security_group.redshift.id]
-  parameter_group_name         = aws_redshift_parameter_group.this.name
+  cluster_parameter_group_name = aws_redshift_parameter_group.this.name
   encrypted                    = true
   kms_key_id                   = var.kms_key_arn
   publicly_accessible          = false

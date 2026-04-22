@@ -1,0 +1,34 @@
+{
+  "Comment": "Migrate many SAP tables in parallel",
+  "StartAt": "ParallelMigrate",
+  "States": {
+    "ParallelMigrate": {
+      "Type": "Map",
+      "MaxConcurrency": 4,
+      "ItemsPath": "$.contracts",
+      "ItemSelector": {
+        "contract_fqn.$": "$$$$.Map.Item.Value",
+        "batch_id.$": "States.Format('{}-{}', $.batch_id, $$$$.Map.Item.Index)",
+        "mode.$": "$.mode"
+      },
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "INLINE"
+        },
+        "StartAt": "InvokeMigrateTable",
+        "States": {
+          "InvokeMigrateTable": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::states:startExecution.sync:2",
+            "Parameters": {
+              "StateMachineArn": "${migrate_table_state_machine_arn}",
+              "Input.$": "$"
+            },
+            "End": true
+          }
+        }
+      },
+      "End": true
+    }
+  }
+}

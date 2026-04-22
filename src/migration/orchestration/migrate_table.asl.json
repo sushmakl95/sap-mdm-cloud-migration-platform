@@ -1,0 +1,269 @@
+{
+  "Comment": "Migrate a single SAP table to Postgres + Redshift",
+  "StartAt": "CheckIdempotency",
+  "States": {
+    "CheckIdempotency": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Parameters": {
+        "TableName": "${idempotency_table}",
+        "Key": {
+          "pk": {
+            "S.$": "States.Format('batch#migrate-table#{}', $.batch_id)"
+          }
+        }
+      },
+      "ResultPath": "$.idempotency_check",
+      "Next": "IsAlreadyDone"
+    },
+    "IsAlreadyDone": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.idempotency_check.Item.status.S",
+          "StringEquals": "SUCCEEDED",
+          "Next": "AlreadyDone"
+        }
+      ],
+      "Default": "RecordStart"
+    },
+    "AlreadyDone": {
+      "Type": "Succeed",
+      "Comment": "Batch already ran successfully \u2014 no-op"
+    },
+    "RecordStart": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Parameters": {
+        "TableName": "${idempotency_table}",
+        "Item": {
+          "pk": {
+            "S.$": "States.Format('batch#migrate-table#{}', $.batch_id)"
+          },
+          "status": {
+            "S": "STARTED"
+          },
+          "started_at": {
+            "S.$": "$$$$.State.EnteredTime"
+          },
+          "contract_fqn": {
+            "S.$": "$.contract_fqn"
+          }
+        }
+      },
+      "ResultPath": null,
+      "Next": "Extract"
+    },
+    "Extract": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${glue_extract_job}",
+        "Arguments": {
+          "--contract_fqn.$": "$.contract_fqn",
+          "--batch_id.$": "$.batch_id",
+          "--mode.$": "$.mode"
+        }
+      },
+      "ResultPath": "$.extract_result",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "RecordFailure",
+          "ResultPath": "$.error"
+        }
+      ],
+      "Next": "ReconcileExtract"
+    },
+    "ReconcileExtract": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::databricks:runJob",
+      "Parameters": {
+        "JobId": "${databricks_reconciliation_job_id}",
+        "NotebookParams": {
+          "contract_fqn.$": "$.contract_fqn",
+          "batch_id.$": "$.batch_id",
+          "phase": "post-extract"
+        }
+      },
+      "ResultPath": "$.extract_reconcile_result",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 60,
+          "MaxAttempts": 1
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "RecordFailure",
+          "ResultPath": "$.error"
+        }
+      ],
+      "Next": "ValidateExtractStatus"
+    },
+    "ValidateExtractStatus": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.extract_reconcile_result.overall_status",
+          "StringEquals": "FAILED",
+          "Next": "RecordFailure"
+        }
+      ],
+      "Default": "Load"
+    },
+    "Load": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "${glue_load_job}",
+        "Arguments": {
+          "--contract_fqn.$": "$.contract_fqn",
+          "--batch_id.$": "$.batch_id",
+          "--extract_path.$": "$.extract_result.output_path"
+        }
+      },
+      "ResultPath": "$.load_result",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 30,
+          "MaxAttempts": 1
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "RecordFailure",
+          "ResultPath": "$.error"
+        }
+      ],
+      "Next": "PostLoadReconcile"
+    },
+    "PostLoadReconcile": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::databricks:runJob",
+      "Parameters": {
+        "JobId": "${databricks_reconciliation_job_id}",
+        "NotebookParams": {
+          "contract_fqn.$": "$.contract_fqn",
+          "batch_id.$": "$.batch_id",
+          "phase": "post-load"
+        }
+      },
+      "ResultPath": "$.post_load_reconcile_result",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "RecordFailure",
+          "ResultPath": "$.error"
+        }
+      ],
+      "Next": "RecordSuccess"
+    },
+    "RecordSuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${idempotency_table}",
+        "Key": {
+          "pk": {
+            "S.$": "States.Format('batch#migrate-table#{}', $.batch_id)"
+          }
+        },
+        "UpdateExpression": "SET #s = :s, completed_at = :ct",
+        "ExpressionAttributeNames": {
+          "#s": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":s": {
+            "S": "SUCCEEDED"
+          },
+          ":ct": {
+            "S.$": "$$$$.State.EnteredTime"
+          }
+        }
+      },
+      "ResultPath": null,
+      "Next": "NotifySuccess"
+    },
+    "NotifySuccess": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${sns_topic_arn}",
+        "Subject.$": "States.Format('[SAP Migration] SUCCESS: {}', $.contract_fqn)",
+        "Message.$": "$"
+      },
+      "End": true
+    },
+    "RecordFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${idempotency_table}",
+        "Key": {
+          "pk": {
+            "S.$": "States.Format('batch#migrate-table#{}', $.batch_id)"
+          }
+        },
+        "UpdateExpression": "SET #s = :s, completed_at = :ct, error = :err",
+        "ExpressionAttributeNames": {
+          "#s": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":s": {
+            "S": "FAILED"
+          },
+          ":ct": {
+            "S.$": "$$$$.State.EnteredTime"
+          },
+          ":err": {
+            "S.$": "States.JsonToString($.error)"
+          }
+        }
+      },
+      "ResultPath": null,
+      "Next": "NotifyFailure"
+    },
+    "NotifyFailure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${sns_topic_arn}",
+        "Subject.$": "States.Format('[SAP Migration] FAILED: {}', $.contract_fqn)",
+        "Message.$": "$"
+      },
+      "Next": "FailState"
+    },
+    "FailState": {
+      "Type": "Fail",
+      "Error": "MigrationFailed",
+      "Cause": "Check SNS notification + DynamoDB audit record"
+    }
+  }
+}

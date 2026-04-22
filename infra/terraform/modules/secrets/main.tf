@@ -1,8 +1,21 @@
-variable "name_prefix" { type = string }
-variable "kms_key_arn" { type = string }
-variable "sap_hana_secret" { type = string; sensitive = true }
-variable "postgres_secret" { type = string; sensitive = true }
-variable "redshift_secret" { type = string; sensitive = true }
+variable "name_prefix" {
+  type = string
+}
+variable "kms_key_arn" {
+  type = string
+}
+variable "sap_hana_secret" {
+  type      = string
+  sensitive = true
+}
+variable "postgres_secret" {
+  type      = string
+  sensitive = true
+}
+variable "redshift_secret" {
+  type      = string
+  sensitive = true
+}
 
 resource "aws_secretsmanager_secret" "sap_hana" {
   name                    = "${var.name_prefix}/sap-hana-jdbc"

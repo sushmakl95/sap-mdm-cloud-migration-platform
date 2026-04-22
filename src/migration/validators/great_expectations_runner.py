@@ -110,7 +110,7 @@ class GreatExpectationsRunner:
                 expectations.append({
                     "name": "expect_column_values_to_be_in_set",
                     "column": m.target_name,
-                    "value_set": list(m.sap_domain_map.values()) + ["true", "false"],
+                    "value_set": [*m.sap_domain_map.values(), "true", "false"],
                     "allow_null": True,
                 })
 

@@ -43,10 +43,22 @@ resource "aws_db_parameter_group" "pg16" {
   name   = "${var.name_prefix}-pg16"
   family = "postgres16"
 
-  parameter { name = "shared_preload_libraries"; value = "pg_stat_statements" }
-  parameter { name = "log_min_duration_statement"; value = "1000" }
-  parameter { name = "log_statement"; value = "ddl" }
-  parameter { name = "track_io_timing"; value = "on" }
+  parameter {
+    name  = "shared_preload_libraries"
+    value = "pg_stat_statements"
+  }
+  parameter {
+    name  = "log_min_duration_statement"
+    value = "1000"
+  }
+  parameter {
+    name  = "log_statement"
+    value = "ddl"
+  }
+  parameter {
+    name  = "track_io_timing"
+    value = "on"
+  }
 }
 
 resource "aws_db_instance" "this" {

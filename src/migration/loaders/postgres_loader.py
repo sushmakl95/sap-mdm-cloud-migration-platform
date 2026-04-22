@@ -121,8 +121,8 @@ class PostgresLoader:
                 .withColumn("_loaded_at", F.current_timestamp())
                 .withColumn("_is_current", F.lit(True))
             )
-            all_cols = columns + ["_source_system", "_extracted_at", "_loaded_at", "_is_current"]
-            audit_update_cols = update_cols + ["_extracted_at", "_loaded_at"]
+            all_cols = [*columns, "_source_system", "_extracted_at", "_loaded_at", "_is_current"]
+            audit_update_cols = [*update_cols, "_extracted_at", "_loaded_at"]
 
             # Rebuild the partition writer with audit cols included
             def writer_with_audit(partition_iter):

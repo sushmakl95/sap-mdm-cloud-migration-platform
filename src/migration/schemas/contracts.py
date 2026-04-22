@@ -8,7 +8,7 @@ A "contract" describes one SAP source table:
   - Column-level type mapping (SAP type -> Postgres + Redshift type)
   - Business rules (SAP domain value mappings, calculated columns)
 
-The extract/transform/load pipeline is driven entirely by contracts — no
+The extract/transform/load pipeline is driven entirely by contracts -- no
 hard-coded table logic. Adding a new table is a matter of defining its contract.
 """
 
@@ -17,9 +17,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-
 # -----------------------------------------------------------------------------
-# SAP type system — HANA + BW native types we commonly encounter
+# SAP type system -- HANA + BW native types we commonly encounter
 # -----------------------------------------------------------------------------
 SapType = Literal[
     # Character types
@@ -30,7 +29,7 @@ SapType = Literal[
     "DATE", "TIME", "TIMESTAMP", "SECONDDATE",
     # Binary
     "VARBINARY", "BLOB",
-    # Boolean (rare in SAP — usually CHAR(1) with X/'' convention)
+    # Boolean (rare in SAP -- usually CHAR(1) with X/'' convention)
     "BOOLEAN",
 ]
 
@@ -63,7 +62,7 @@ class ColumnMapping:
 
     # Business rules
     sap_domain_map: dict[str, str] | None = None
-    """If this column is a SAP domain (e.g., XFELD: 'X' → true, '' → false), map it here."""
+    """If this column is a SAP domain (e.g., XFELD: 'X' -> true, '' -> false), map it here."""
 
     default_on_null: str | None = None
     """SQL expression used when source value is NULL (e.g., "'UNKNOWN'" or "CURRENT_TIMESTAMP")."""
@@ -84,7 +83,7 @@ class TableContract:
     target_redshift_schema: str
     target_redshift_table: str
 
-    # JDBC partitioning — absolutely critical for reading large tables in parallel
+    # JDBC partitioning -- absolutely critical for reading large tables in parallel
     partition_column: str | None = None
     partition_num_chunks: int = 16
 

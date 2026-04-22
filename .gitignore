@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+*.log
+
+# AWS / Databricks
+.databricks/
+.aws/
+
+# Data
+data/generated/
+data/extracts/
+*.parquet
+*.orc
+!data/sample/**/*.parquet
+!data/sample/**/*.csv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
+terraform.tfplan
+
+# Secrets
+.env
+.env.*
+!.env.example
+service-account*.json
+credentials*.json
+*.pem
+*.key
+
+# Jupyter / Databricks
+.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store

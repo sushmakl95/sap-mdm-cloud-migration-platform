@@ -1,0 +1,65 @@
+# Copy to envs/dev.tfvars (gitignored) and fill in values.
+# ALL values except `environment` are placeholders — you must set them before
+# running `terraform apply`.
+
+project_name = "sap-mdm"
+environment  = "dev"
+aws_region   = "us-east-1"
+cost_center  = "data-platform"
+
+# Networking
+vpc_cidr_block     = "10.20.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# ----------------------------------------------------------------------------
+# Secrets — structured JSON matching what migration/utils/secrets.py expects
+# ----------------------------------------------------------------------------
+sap_hana_secret_value = <<EOT
+{
+  "host": "sap-hana-dev.example.internal",
+  "port": "30015",
+  "database": "SAPDEV",
+  "username": "dms_reader",
+  "password": "CHANGE_ME_THEN_ROTATE"
+}
+EOT
+
+postgres_secret_value = <<EOT
+{
+  "host": "placeholder-will-be-overwritten-by-rds-module",
+  "port": "5432",
+  "database": "sap_mdm",
+  "username": "sap_mdm_admin",
+  "password": "CHANGE_ME_THEN_ROTATE_32_CHARS_MIN"
+}
+EOT
+
+redshift_secret_value = <<EOT
+{
+  "host": "placeholder-will-be-overwritten-by-redshift-module",
+  "port": "5439",
+  "database": "sap_mdm",
+  "username": "sap_analytics",
+  "password": "CHANGE_ME_THEN_ROTATE_32_CHARS_MIN"
+}
+EOT
+
+# RDS (dev-sized)
+rds_instance_class       = "db.t4g.medium"
+rds_allocated_storage_gb = 50
+
+# Redshift (dev-sized)
+redshift_node_type       = "dc2.large"
+redshift_number_of_nodes = 1
+
+# DMS (dev-sized)
+dms_replication_instance_class = "dms.t3.medium"
+
+# Databricks (must be created manually first; paste workspace URL + PAT)
+databricks_workspace_url = "https://dbc-xxxxxxxx.cloud.databricks.com"
+databricks_token         = "dapi-CHANGE_ME"
+
+# Schedule + alarms
+nightly_migration_schedule = "cron(0 2 * * ? *)"
+log_retention_days         = 7
+alarm_email_recipients     = ["data-eng-alerts@example.com"]

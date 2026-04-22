@@ -1,0 +1,67 @@
+# Additional data quality rules beyond what the contract auto-generates.
+# These are domain-specific business rules — used by the GreatExpectationsRunner.
+
+version: "1.0"
+
+rules:
+  # Materials must have a valid material_type
+  - table: mdm.material_master
+    column: material_type
+    expectation: expect_column_values_to_be_in_set
+    value_set: [HAWA, FERT, ROH, HALB, DIEN, VERP, LEIH]
+    severity: CRITICAL
+
+  # Weights must be non-negative
+  - table: mdm.material_master
+    column: gross_weight
+    expectation: expect_column_values_to_be_between
+    min_value: 0
+    max_value: 100000
+    severity: WARNING
+
+  # Customer emails should be valid format
+  - table: mdm.customer_master
+    column: email
+    expectation: expect_column_values_to_match_regex
+    regex: "^[\\w\\.-]+@[\\w\\.-]+\\.\\w+$"
+    allow_null: true
+    severity: WARNING
+
+  # Country codes must be ISO 3166-1 alpha-2 or alpha-3
+  - table: mdm.customer_master
+    column: country_code
+    expectation: expect_column_values_to_match_regex
+    regex: "^[A-Z]{2,3}$"
+    severity: CRITICAL
+
+  # Vendor tax numbers: if country is US, STCD1 is EIN (9 chars)
+  - table: mdm.vendor_master
+    column: tax_number_1
+    expectation: expect_column_value_lengths_to_be_between
+    where: "country_code = 'US'"
+    min_length: 9
+    max_length: 16
+    severity: WARNING
+
+  # Price history valid_from must be <= valid_to
+  - table: mdm.price_history
+    expectation: expect_column_pair_values_A_to_be_less_than_B
+    column_A: valid_from
+    column_B: valid_to
+    or_equal: true
+    severity: CRITICAL
+
+  # Prices must be positive
+  - table: mdm.price_history
+    column: price
+    expectation: expect_column_values_to_be_between
+    min_value: 0.01
+    max_value: 1000000
+    severity: CRITICAL
+
+  # Currency codes must be ISO 4217
+  - table: mdm.price_history
+    column: currency_code
+    expectation: expect_column_values_to_be_in_set
+    value_set: [USD, EUR, GBP, JPY, INR, CAD, AUD, BRL, CNY, MXN]
+    severity: CRITICAL

@@ -1,0 +1,88 @@
+# Master cutover schedule.
+# Track progress per table through the 5 migration phases.
+
+version: "1.0"
+project: SAP MDM to AWS
+start_date: "2026-05-01"
+target_completion: "2026-08-31"
+
+# Tables in scope — order by risk (low-risk first to build confidence)
+tables:
+  - name: LFA1
+    target_postgres: mdm.vendor_master
+    target_redshift: mdm.vendor_master
+    risk: LOW
+    current_phase: 1
+    phase_history: []
+
+  - name: ZPRICE_HISTORY
+    target_postgres: mdm.price_history
+    target_redshift: mdm.price_history
+    risk: MEDIUM
+    current_phase: 1
+    phase_history: []
+
+  - name: MARA
+    target_postgres: mdm.material_master
+    target_redshift: mdm.material_master
+    risk: HIGH
+    current_phase: 1
+    phase_history: []
+
+  - name: KNA1
+    target_postgres: mdm.customer_master
+    target_redshift: mdm.customer_master
+    risk: HIGH
+    current_phase: 1
+    phase_history: []
+
+# Dependencies between tables — don't cut over MARA before its lookups are stable
+dependencies:
+  # Material master depends on material groups catalog (T023T) being loaded
+  MARA:
+    requires:
+      - T023T  # material group texts
+      - T134T  # material type texts
+
+  # Customer master depends on country master
+  KNA1:
+    requires:
+      - T005T  # country texts
+
+  # Price history depends on material master
+  ZPRICE_HISTORY:
+    requires:
+      - MARA
+
+# Phase timing expectations
+phase_durations:
+  1_shadow_read:
+    min_days: 7
+    max_days: 14
+  2_dual_write:
+    min_days: 7
+    max_days: 14
+  3_shadow_read_aws:
+    min_days: 14
+    max_days: 21
+  4_primary_read:
+    min_days: 14
+    max_days: 60
+  5_decommission:
+    min_days: 30
+    max_days: 365
+
+# Gate criteria — must pass before phase transition
+gate_criteria:
+  1_to_2:
+    - 7_consecutive_green_reconciliations
+    - business_signoff_sample_records
+  2_to_3:
+    - write_mismatch_rate_under_0.01_pct_14d
+    - dual_write_latency_within_sla
+  3_to_4:
+    - read_diff_rate_under_0.01_pct_14d
+    - no_customer_complaints_from_traffic_split
+  4_to_5:
+    - 30_days_stable_at_100pct
+    - director_level_approval

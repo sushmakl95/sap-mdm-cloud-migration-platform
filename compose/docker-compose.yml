@@ -1,0 +1,39 @@
+# Local stack simulating SAP source + target Postgres for integration tests.
+# Skip for unit tests — tests/unit/ uses pure Spark with no DB.
+
+version: "3.8"
+
+services:
+  # Simulated SAP source
+  sap-source:
+    image: postgres:16
+    container_name: sap-source
+    environment:
+      POSTGRES_DB: sap_source
+      POSTGRES_USER: sap_reader
+      POSTGRES_PASSWORD: localpassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./sap-source-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sap_reader -d sap_source"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Target Postgres (RDS stand-in)
+  target-postgres:
+    image: postgres:16
+    container_name: target-postgres
+    environment:
+      POSTGRES_DB: sap_mdm
+      POSTGRES_USER: sap_mdm_admin
+      POSTGRES_PASSWORD: localpassword
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sap_mdm_admin -d sap_mdm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

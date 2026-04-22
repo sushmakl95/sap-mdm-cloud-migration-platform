@@ -1,0 +1,40 @@
+# Production-sized config. ⚠️ Costs ~$1,200/month. Follow COST_ANALYSIS.md.
+
+project_name = "sap-mdm"
+environment  = "prod"
+aws_region   = "us-east-1"
+cost_center  = "data-platform"
+
+vpc_cidr_block     = "10.30.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+
+sap_hana_secret_value = <<EOT
+{
+  "host": "sap-hana-prod.internal.example.com",
+  "port": "30015",
+  "database": "SAPPROD",
+  "username": "dms_reader",
+  "password": "SET_VIA_SECRETS_MANAGER_ROTATION"
+}
+EOT
+
+postgres_secret_value = "{\"placeholder\": true}"
+redshift_secret_value = "{\"placeholder\": true}"
+
+# RDS (prod-sized, Multi-AZ)
+rds_instance_class       = "db.r6g.xlarge"
+rds_allocated_storage_gb = 500
+
+# Redshift (prod-sized)
+redshift_node_type       = "ra3.xlplus"
+redshift_number_of_nodes = 3
+
+# DMS (prod-sized)
+dms_replication_instance_class = "dms.r5.large"
+
+databricks_workspace_url = "https://dbc-prod.cloud.databricks.com"
+databricks_token         = "dapi-SET_VIA_SECRETS"
+
+nightly_migration_schedule = "cron(0 2 * * ? *)"
+log_retention_days         = 90
+alarm_email_recipients     = ["oncall-data@example.com", "pager-data@example.com"]

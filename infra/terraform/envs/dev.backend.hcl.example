@@ -1,0 +1,10 @@
+# Copy to envs/dev.backend.hcl and use with:
+#   terraform init -backend-config=envs/dev.backend.hcl
+#
+# Pre-requisite: create the S3 bucket + DynamoDB lock table in a bootstrap run.
+
+bucket         = "sap-mdm-tfstate-dev-<random-suffix>"
+key            = "sap-mdm-platform/dev/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "sap-mdm-tfstate-locks-dev"
+encrypt        = true

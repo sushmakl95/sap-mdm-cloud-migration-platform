@@ -1,0 +1,111 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sap-mdm-cloud-migration-platform"
+version = "1.0.0"
+description = "Production-grade SAP MDM to AWS + Databricks migration platform"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Sushma K L", email = "sushmakl95@gmail.com" }]
+keywords = [
+    "sap", "mdm", "aws", "databricks", "pyspark", "glue", "dms",
+    "redshift", "postgres", "migration", "data-engineering",
+]
+
+dependencies = [
+    "pyspark>=3.5.0,<3.6",
+    "delta-spark>=3.2.0,<3.3",
+    "boto3>=1.34.0",
+    "psycopg2-binary>=2.9.9",
+    "redshift-connector>=2.1.0",
+    "sqlalchemy>=2.0.25",
+    "pyyaml>=6.0.1",
+    "pydantic>=2.6.0",
+    "structlog>=24.1.0",
+    "click>=8.1.7",
+    "great-expectations>=0.18.0",
+    "pyarrow>=15.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.4.0",
+    "mypy>=1.9.0",
+    "bandit[toml]>=1.7.8",
+    "detect-secrets>=1.5.0",
+    "pre-commit>=3.7.0",
+    "moto[all]>=5.0.0",
+    "faker>=24.0.0",
+]
+
+[project.scripts]
+sap-migrate = "migration.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["migration*", "lambdas*"]
+
+# --------------------------------------------------------------------------
+# Ruff — battle-tested config (applied lessons from Repos 1-4)
+# --------------------------------------------------------------------------
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = [
+    "target/*",
+    "notebooks/*",
+    "data/sample/*",
+    "spark-warehouse/*",
+    "metastore_db/*",
+]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "RUF"]
+ignore = [
+    "E501", "N812", "S608", "RUF022", "UP042", "B008", "RUF012",
+    "RUF002", "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "RUF059", "B"]
+"scripts/*" = ["S603", "S607"]
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-third-party = [
+    "pyspark", "delta", "boto3", "moto", "psycopg2",
+    "redshift_connector", "sqlalchemy", "pydantic", "great_expectations",
+    "structlog", "click", "faker", "pyarrow",
+]
+known-first-party = ["migration", "lambdas"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = ["tests/", "notebooks/"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+markers = [
+    "unit: fast unit tests",
+    "integration: integration tests (slower)",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", "scripts", "notebooks"]
+skips = ["B101", "B608"]

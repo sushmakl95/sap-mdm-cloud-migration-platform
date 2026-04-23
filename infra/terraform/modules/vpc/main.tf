@@ -3,8 +3,8 @@ variable "cidr_block" { type = string }
 variable "availability_zones" { type = list(string) }
 
 locals {
-  public_cidrs      = [for i, _ in var.availability_zones : cidrsubnet(var.cidr_block, 8, i + 1)]
-  private_app_cidrs = [for i, _ in var.availability_zones : cidrsubnet(var.cidr_block, 8, i + 11)]
+  public_cidrs       = [for i, _ in var.availability_zones : cidrsubnet(var.cidr_block, 8, i + 1)]
+  private_app_cidrs  = [for i, _ in var.availability_zones : cidrsubnet(var.cidr_block, 8, i + 11)]
   private_data_cidrs = [for i, _ in var.availability_zones : cidrsubnet(var.cidr_block, 8, i + 21)]
 }
 
@@ -115,7 +115,7 @@ resource "aws_vpc_endpoint" "s3" {
   service_name      = "com.amazonaws.${data.aws_region.current.name}.s3"
   route_table_ids   = [aws_route_table.private.id]
   vpc_endpoint_type = "Gateway"
-  tags = { Name = "${var.name_prefix}-s3-endpoint" }
+  tags              = { Name = "${var.name_prefix}-s3-endpoint" }
 }
 
 data "aws_region" "current" {}

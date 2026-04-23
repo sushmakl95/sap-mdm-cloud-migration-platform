@@ -31,7 +31,7 @@ resource "aws_dynamodb_table" "audit" {
   }
 
   tags = {
-    Name = "${var.name_prefix}-audit"
+    Name    = "${var.name_prefix}-audit"
     Purpose = "migration-idempotency-and-watermarks"
   }
 }
@@ -154,9 +154,9 @@ resource "aws_cloudwatch_dashboard" "migration" {
   dashboard_body = jsonencode({
     widgets = [
       {
-        type = "metric"
-        x    = 0
-        y    = 0
+        type   = "metric"
+        x      = 0
+        y      = 0
         width  = 12
         height = 6
         properties = {
@@ -166,16 +166,16 @@ resource "aws_cloudwatch_dashboard" "migration" {
             [".", ".", ".", "LFA1"],
           ]
           period = 3600
-          stat = "Sum"
+          stat   = "Sum"
           region = "us-east-1"
-          title = "Rows Extracted per Table (hourly)"
+          title  = "Rows Extracted per Table (hourly)"
         }
       },
       {
-        type = "metric"
-        x = 12
-        y = 0
-        width = 12
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
         height = 6
         properties = {
           metrics = [
@@ -183,16 +183,16 @@ resource "aws_cloudwatch_dashboard" "migration" {
             ["SAP/Migration/Load", "RedshiftRowsLoaded", "Table", "material_master"],
           ]
           period = 3600
-          stat = "Sum"
+          stat   = "Sum"
           region = "us-east-1"
-          title = "Rows Loaded (Postgres vs Redshift)"
+          title  = "Rows Loaded (Postgres vs Redshift)"
         }
       },
       {
-        type = "metric"
-        x = 0
-        y = 6
-        width = 12
+        type   = "metric"
+        x      = 0
+        y      = 6
+        width  = 12
         height = 6
         properties = {
           metrics = [
@@ -200,16 +200,16 @@ resource "aws_cloudwatch_dashboard" "migration" {
             ["AWS/DMS", "CDCLatencySource", ".", "."],
           ]
           period = 60
-          stat = "Average"
+          stat   = "Average"
           region = "us-east-1"
-          title = "DMS CDC Replication Lag (seconds)"
+          title  = "DMS CDC Replication Lag (seconds)"
         }
       },
       {
-        type = "metric"
-        x = 12
-        y = 6
-        width = 12
+        type   = "metric"
+        x      = 12
+        y      = 6
+        width  = 12
         height = 6
         properties = {
           metrics = [
@@ -217,9 +217,9 @@ resource "aws_cloudwatch_dashboard" "migration" {
             ["AWS/Redshift", "CPUUtilization", "ClusterIdentifier", "${var.name_prefix}-rs"],
           ]
           period = 300
-          stat = "Average"
+          stat   = "Average"
           region = "us-east-1"
-          title = "Target DB CPU"
+          title  = "Target DB CPU"
         }
       },
     ]

@@ -1,5 +1,53 @@
 # Architecture
 
+## End-to-end migration flow
+
+```mermaid
+flowchart LR
+    subgraph SAP["🏢 SAP on-prem"]
+        HANA[(SAP HANA)]
+        BW[(SAP BW)]
+    end
+
+    subgraph Extract["📤 Extract"]
+        DMS[AWS DMS CDC]
+        GLUE[AWS Glue<br/>bulk PySpark]
+        RAW[(S3 bronze<br/>by batch_id)]
+    end
+
+    subgraph Validate["✅ Validate DBR 15.4 LTS"]
+        DBR[Databricks Runtime 15.4<br/>Asset Bundle]
+        NORM[silver / normalize]
+        RECON[gold / 5-layer<br/>reconciliation]
+    end
+
+    subgraph Publish["🎯 Publish"]
+        PG[(RDS Postgres<br/>row lookup)]
+        RS[(Redshift<br/>analytics MPP)]
+        UC[Unity Catalog]
+    end
+
+    subgraph Gov["📒 Governance"]
+        OL[OpenLineage Spark listener]
+        MQ[Marquez / DataHub]
+    end
+
+    subgraph Ops["⚠️ Safety"]
+        CUT[Multi-phase cutover<br/>Step Functions]
+        ROLL[Automated rollback<br/>snapshot + replay]
+    end
+
+    HANA --> DMS --> RAW
+    BW --> GLUE --> RAW
+    RAW --> DBR --> NORM --> RECON
+    RECON --> PG
+    RECON --> RS
+    RECON --> UC
+    DBR -. spark.extraListeners .-> OL --> MQ
+    CUT -. orchestrates .-> DBR
+    CUT -. triggers .-> ROLL
+```
+
 ## Why two target warehouses?
 
 Most enterprise data platforms need **both** operational and analytical access patterns, which have opposing storage requirements:

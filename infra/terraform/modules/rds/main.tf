@@ -62,32 +62,32 @@ resource "aws_db_parameter_group" "pg16" {
 }
 
 resource "aws_db_instance" "this" {
-  identifier                  = "${var.name_prefix}-rds"
-  engine                      = "postgres"
-  engine_version              = "16.3"
-  instance_class              = var.instance_class
-  allocated_storage           = var.allocated_storage_gb
-  max_allocated_storage       = var.allocated_storage_gb * 2
-  storage_type                = "gp3"
-  storage_encrypted           = true
-  kms_key_id                  = var.kms_key_arn
-  username                    = var.master_username
-  password                    = jsondecode(data.aws_secretsmanager_secret_version.pg.secret_string)["password"]
-  db_subnet_group_name        = aws_db_subnet_group.this.name
-  vpc_security_group_ids      = [aws_security_group.rds.id]
-  parameter_group_name        = aws_db_parameter_group.pg16.name
-  multi_az                    = var.multi_az
-  publicly_accessible         = false
-  skip_final_snapshot         = false
-  final_snapshot_identifier   = "${var.name_prefix}-rds-final-snapshot"
-  backup_retention_period     = 14
-  backup_window               = "03:00-04:00"
-  maintenance_window          = "sun:04:00-sun:05:00"
-  performance_insights_enabled = true
-  performance_insights_kms_key_id = var.kms_key_arn
+  identifier                            = "${var.name_prefix}-rds"
+  engine                                = "postgres"
+  engine_version                        = "16.3"
+  instance_class                        = var.instance_class
+  allocated_storage                     = var.allocated_storage_gb
+  max_allocated_storage                 = var.allocated_storage_gb * 2
+  storage_type                          = "gp3"
+  storage_encrypted                     = true
+  kms_key_id                            = var.kms_key_arn
+  username                              = var.master_username
+  password                              = jsondecode(data.aws_secretsmanager_secret_version.pg.secret_string)["password"]
+  db_subnet_group_name                  = aws_db_subnet_group.this.name
+  vpc_security_group_ids                = [aws_security_group.rds.id]
+  parameter_group_name                  = aws_db_parameter_group.pg16.name
+  multi_az                              = var.multi_az
+  publicly_accessible                   = false
+  skip_final_snapshot                   = false
+  final_snapshot_identifier             = "${var.name_prefix}-rds-final-snapshot"
+  backup_retention_period               = 14
+  backup_window                         = "03:00-04:00"
+  maintenance_window                    = "sun:04:00-sun:05:00"
+  performance_insights_enabled          = true
+  performance_insights_kms_key_id       = var.kms_key_arn
   performance_insights_retention_period = 7
-  deletion_protection         = true
-  enabled_cloudwatch_logs_exports = ["postgresql"]
+  deletion_protection                   = true
+  enabled_cloudwatch_logs_exports       = ["postgresql"]
 }
 
 output "endpoint" { value = aws_db_instance.this.endpoint }

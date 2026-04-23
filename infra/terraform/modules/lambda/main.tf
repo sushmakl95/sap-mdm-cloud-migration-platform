@@ -35,9 +35,9 @@ resource "aws_lambda_function" "s3_trigger" {
 
   environment {
     variables = {
-      IDEMPOTENCY_TABLE        = var.idempotency_table
-      STATE_MACHINE_ARN        = var.state_machine_arn
-      DEBOUNCE_WINDOW_MINUTES  = "5"
+      IDEMPOTENCY_TABLE       = var.idempotency_table
+      STATE_MACHINE_ARN       = var.state_machine_arn
+      DEBOUNCE_WINDOW_MINUTES = "5"
     }
   }
 

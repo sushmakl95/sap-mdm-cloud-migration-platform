@@ -58,29 +58,29 @@ resource "aws_redshift_parameter_group" "this" {
 }
 
 resource "aws_redshift_cluster" "this" {
-  cluster_identifier           = "${var.name_prefix}-rs"
-  database_name                = "sap_mdm"
-  master_username              = var.master_username
-  master_password              = random_password.master.result
-  node_type                    = var.node_type
-  number_of_nodes              = var.number_of_nodes
-  cluster_type                 = var.number_of_nodes > 1 ? "multi-node" : "single-node"
-  cluster_subnet_group_name    = aws_redshift_subnet_group.this.name
-  vpc_security_group_ids       = [aws_security_group.redshift.id]
-  cluster_parameter_group_name = aws_redshift_parameter_group.this.name
-  encrypted                    = true
-  kms_key_id                   = var.kms_key_arn
-  publicly_accessible          = false
-  skip_final_snapshot          = false
-  final_snapshot_identifier    = "${var.name_prefix}-rs-final-snapshot"
+  cluster_identifier                  = "${var.name_prefix}-rs"
+  database_name                       = "sap_mdm"
+  master_username                     = var.master_username
+  master_password                     = random_password.master.result
+  node_type                           = var.node_type
+  number_of_nodes                     = var.number_of_nodes
+  cluster_type                        = var.number_of_nodes > 1 ? "multi-node" : "single-node"
+  cluster_subnet_group_name           = aws_redshift_subnet_group.this.name
+  vpc_security_group_ids              = [aws_security_group.redshift.id]
+  cluster_parameter_group_name        = aws_redshift_parameter_group.this.name
+  encrypted                           = true
+  kms_key_id                          = var.kms_key_arn
+  publicly_accessible                 = false
+  skip_final_snapshot                 = false
+  final_snapshot_identifier           = "${var.name_prefix}-rs-final-snapshot"
   automated_snapshot_retention_period = 7
-  iam_roles                    = [var.s3_iam_role_arn]
-  enhanced_vpc_routing         = true
+  iam_roles                           = [var.s3_iam_role_arn]
+  enhanced_vpc_routing                = true
 
   logging {
-    enable = true
+    enable               = true
     log_destination_type = "cloudwatch"
-    log_exports = ["userlog", "connectionlog", "useractivitylog"]
+    log_exports          = ["userlog", "connectionlog", "useractivitylog"]
   }
 }
 

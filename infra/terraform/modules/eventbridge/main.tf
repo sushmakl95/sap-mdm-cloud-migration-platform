@@ -71,13 +71,13 @@ resource "aws_scheduler_schedule" "nightly_migration" {
 # SFN state-change event rule → notifier Lambda
 # -----------------------------------------------------------------------------
 resource "aws_cloudwatch_event_rule" "sfn_state_change" {
-  name          = "${var.name_prefix}-sfn-state-change"
-  description   = "Capture all SFN state changes for SAP migration state machines"
+  name        = "${var.name_prefix}-sfn-state-change"
+  description = "Capture all SFN state changes for SAP migration state machines"
   event_pattern = jsonencode({
     source      = ["aws.states"]
     detail-type = ["Step Functions Execution Status Change"]
     detail = {
-      status = ["SUCCEEDED", "FAILED", "TIMED_OUT", "ABORTED"]
+      status          = ["SUCCEEDED", "FAILED", "TIMED_OUT", "ABORTED"]
       stateMachineArn = [{ prefix = "arn:aws:states:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:stateMachine:${var.name_prefix}" }]
     }
   })

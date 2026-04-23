@@ -14,7 +14,7 @@ locals {
 # -----------------------------------------------------------------------------
 resource "aws_s3_bucket" "raw" {
   bucket = "${var.name_prefix}-raw-${local.suffix}"
-  tags = { Tier = "raw" }
+  tags   = { Tier = "raw" }
 }
 
 resource "aws_s3_bucket_versioning" "raw" {
@@ -75,7 +75,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "raw" {
 # -----------------------------------------------------------------------------
 resource "aws_s3_bucket" "staging" {
   bucket = "${var.name_prefix}-staging-${local.suffix}"
-  tags = { Tier = "staging" }
+  tags   = { Tier = "staging" }
 }
 
 resource "aws_s3_bucket_versioning" "staging" {
@@ -109,7 +109,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "staging" {
 # -----------------------------------------------------------------------------
 resource "aws_s3_bucket" "glue_scripts" {
   bucket = "${var.name_prefix}-glue-scripts-${local.suffix}"
-  tags = { Tier = "scripts" }
+  tags   = { Tier = "scripts" }
 }
 
 resource "aws_s3_bucket_versioning" "glue_scripts" {
@@ -123,7 +123,7 @@ resource "aws_s3_bucket_versioning" "glue_scripts" {
 resource "aws_s3_bucket" "audit" {
   bucket              = "${var.name_prefix}-audit-${local.suffix}"
   object_lock_enabled = true
-  tags = { Tier = "audit" }
+  tags                = { Tier = "audit" }
 }
 
 resource "aws_s3_bucket_object_lock_configuration" "audit" {

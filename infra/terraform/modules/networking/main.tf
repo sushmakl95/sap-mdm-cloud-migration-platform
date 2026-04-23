@@ -21,13 +21,13 @@ resource "aws_security_group" "app" {
 }
 
 resource "aws_security_group_rule" "app_self_ingress" {
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.app.id
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  security_group_id        = aws_security_group.app.id
   source_security_group_id = aws_security_group.app.id
-  description       = "Intra-app-tier communication"
+  description              = "Intra-app-tier communication"
 }
 
 resource "aws_security_group" "data" {

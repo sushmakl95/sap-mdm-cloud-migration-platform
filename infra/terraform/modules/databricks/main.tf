@@ -17,8 +17,8 @@ resource "databricks_cluster_policy" "migration" {
 
   definition = jsonencode({
     "spark_version" = {
-      "type"         = "fixed"
-      "value"        = "14.3.x-scala2.12"
+      "type"  = "fixed"
+      "value" = "15.4.x-scala2.12"
     }
     "node_type_id" = {
       "type"         = "allowlist"
@@ -26,22 +26,22 @@ resource "databricks_cluster_policy" "migration" {
       "defaultValue" = "i3.xlarge"
     }
     "autoscale.min_workers" = {
-      "type"         = "range"
-      "minValue"     = 1
-      "maxValue"     = 4
+      "type"     = "range"
+      "minValue" = 1
+      "maxValue" = 4
     }
     "autoscale.max_workers" = {
-      "type"         = "range"
-      "minValue"     = 2
-      "maxValue"     = 16
+      "type"     = "range"
+      "minValue" = 2
+      "maxValue" = 16
     }
     "aws_attributes.instance_profile_arn" = {
-      "type"         = "fixed"
-      "value"        = var.instance_profile_arn
+      "type"  = "fixed"
+      "value" = var.instance_profile_arn
     }
     "aws_attributes.availability" = {
-      "type"         = "fixed"
-      "value"        = "SPOT_WITH_FALLBACK"
+      "type"  = "fixed"
+      "value" = "SPOT_WITH_FALLBACK"
     }
   })
 }
@@ -53,19 +53,19 @@ resource "databricks_job" "reconciliation" {
   job_cluster {
     job_cluster_key = "reconcile"
     new_cluster {
-      spark_version           = "14.3.x-scala2.12"
-      node_type_id            = "i3.xlarge"
-      policy_id               = databricks_cluster_policy.migration.id
-      num_workers             = 2
+      spark_version = "15.4.x-scala2.12"
+      node_type_id  = "i3.xlarge"
+      policy_id     = databricks_cluster_policy.migration.id
+      num_workers   = 2
       aws_attributes {
-        availability          = "SPOT_WITH_FALLBACK"
-        instance_profile_arn  = var.instance_profile_arn
+        availability         = "SPOT_WITH_FALLBACK"
+        instance_profile_arn = var.instance_profile_arn
       }
     }
   }
 
   task {
-    task_key = "run-reconciliation"
+    task_key        = "run-reconciliation"
     job_cluster_key = "reconcile"
 
     notebook_task {
@@ -76,8 +76,8 @@ resource "databricks_job" "reconciliation" {
       }
     }
 
-    timeout_seconds = 3600
-    max_retries     = 1
+    timeout_seconds           = 3600
+    max_retries               = 1
     min_retry_interval_millis = 60000
   }
 

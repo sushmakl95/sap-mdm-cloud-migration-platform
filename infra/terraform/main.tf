@@ -59,9 +59,9 @@ module "vpc" {
 module "networking" {
   source = "./modules/networking"
 
-  name_prefix      = local.name_prefix
-  vpc_id           = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
+  name_prefix             = local.name_prefix
+  vpc_id                  = module.vpc.vpc_id
+  public_subnet_ids       = module.vpc.public_subnet_ids
   private_app_subnet_ids  = module.vpc.private_app_subnet_ids
   private_data_subnet_ids = module.vpc.private_data_subnet_ids
 }
@@ -78,11 +78,11 @@ module "kms" {
 module "secrets" {
   source = "./modules/secrets"
 
-  name_prefix      = local.name_prefix
-  kms_key_arn      = module.kms.secrets_key_arn
-  sap_hana_secret  = var.sap_hana_secret_value
-  postgres_secret  = var.postgres_secret_value
-  redshift_secret  = var.redshift_secret_value
+  name_prefix     = local.name_prefix
+  kms_key_arn     = module.kms.secrets_key_arn
+  sap_hana_secret = var.sap_hana_secret_value
+  postgres_secret = var.postgres_secret_value
+  redshift_secret = var.redshift_secret_value
 }
 
 module "iam" {
@@ -148,49 +148,49 @@ module "redshift" {
 module "glue" {
   source = "./modules/glue"
 
-  name_prefix         = local.name_prefix
-  glue_role_arn       = module.iam.glue_role_arn
-  scripts_bucket      = module.s3.glue_scripts_bucket_name
-  raw_bucket          = module.s3.raw_bucket_name
-  staging_bucket      = module.s3.staging_bucket_name
-  vpc_id              = module.vpc.vpc_id
-  subnet_ids          = module.vpc.private_app_subnet_ids
-  security_group_ids  = [module.networking.app_sg_id]
+  name_prefix        = local.name_prefix
+  glue_role_arn      = module.iam.glue_role_arn
+  scripts_bucket     = module.s3.glue_scripts_bucket_name
+  raw_bucket         = module.s3.raw_bucket_name
+  staging_bucket     = module.s3.staging_bucket_name
+  vpc_id             = module.vpc.vpc_id
+  subnet_ids         = module.vpc.private_app_subnet_ids
+  security_group_ids = [module.networking.app_sg_id]
 }
 
 module "dms" {
   source = "./modules/dms"
 
-  name_prefix              = local.name_prefix
-  vpc_id                   = module.vpc.vpc_id
-  subnet_ids               = module.vpc.private_data_subnet_ids
+  name_prefix                = local.name_prefix
+  vpc_id                     = module.vpc.vpc_id
+  subnet_ids                 = module.vpc.private_data_subnet_ids
   replication_instance_class = var.dms_replication_instance_class
-  source_secret_arn        = module.secrets.sap_hana_secret_arn
-  target_s3_bucket         = module.s3.raw_bucket_name
-  dms_role_arn             = module.iam.dms_role_arn
+  source_secret_arn          = module.secrets.sap_hana_secret_arn
+  target_s3_bucket           = module.s3.raw_bucket_name
+  dms_role_arn               = module.iam.dms_role_arn
 }
 
 module "databricks" {
   source = "./modules/databricks"
 
-  name_prefix                = local.name_prefix
-  databricks_workspace_url   = var.databricks_workspace_url
-  instance_profile_arn       = module.iam.databricks_instance_profile_arn
-  raw_bucket                 = module.s3.raw_bucket_name
-  staging_bucket             = module.s3.staging_bucket_name
+  name_prefix              = local.name_prefix
+  databricks_workspace_url = var.databricks_workspace_url
+  instance_profile_arn     = module.iam.databricks_instance_profile_arn
+  raw_bucket               = module.s3.raw_bucket_name
+  staging_bucket           = module.s3.staging_bucket_name
 }
 
 module "lambda" {
   source = "./modules/lambda"
 
-  name_prefix          = local.name_prefix
-  lambda_role_arn      = module.iam.lambda_role_arn
-  raw_bucket_name      = module.s3.raw_bucket_name
-  idempotency_table    = module.monitoring.idempotency_table_name
-  sns_topic_arn        = module.monitoring.notifications_topic_arn
-  state_machine_arn    = module.stepfunctions.migrate_table_sm_arn
-  subnet_ids           = module.vpc.private_app_subnet_ids
-  security_group_ids   = [module.networking.app_sg_id]
+  name_prefix        = local.name_prefix
+  lambda_role_arn    = module.iam.lambda_role_arn
+  raw_bucket_name    = module.s3.raw_bucket_name
+  idempotency_table  = module.monitoring.idempotency_table_name
+  sns_topic_arn      = module.monitoring.notifications_topic_arn
+  state_machine_arn  = module.stepfunctions.migrate_table_sm_arn
+  subnet_ids         = module.vpc.private_app_subnet_ids
+  security_group_ids = [module.networking.app_sg_id]
 }
 
 # -----------------------------------------------------------------------------
@@ -199,23 +199,23 @@ module "lambda" {
 module "stepfunctions" {
   source = "./modules/stepfunctions"
 
-  name_prefix         = local.name_prefix
-  sfn_role_arn        = module.iam.sfn_role_arn
-  glue_extract_job    = module.glue.extract_job_name
-  glue_load_job       = module.glue.load_job_name
-  idempotency_table   = module.monitoring.idempotency_table_name
-  sns_topic_arn       = module.monitoring.notifications_topic_arn
-  databricks_job_id   = module.databricks.reconciliation_job_id
-  rollback_glue_job   = module.glue.rollback_job_name
+  name_prefix       = local.name_prefix
+  sfn_role_arn      = module.iam.sfn_role_arn
+  glue_extract_job  = module.glue.extract_job_name
+  glue_load_job     = module.glue.load_job_name
+  idempotency_table = module.monitoring.idempotency_table_name
+  sns_topic_arn     = module.monitoring.notifications_topic_arn
+  databricks_job_id = module.databricks.reconciliation_job_id
+  rollback_glue_job = module.glue.rollback_job_name
 }
 
 module "eventbridge" {
   source = "./modules/eventbridge"
 
-  name_prefix           = local.name_prefix
-  batch_sm_arn          = module.stepfunctions.batch_migrate_sm_arn
+  name_prefix             = local.name_prefix
+  batch_sm_arn            = module.stepfunctions.batch_migrate_sm_arn
   sfn_notifier_lambda_arn = module.lambda.sfn_notifier_function_arn
-  schedule_expression   = var.nightly_migration_schedule
+  schedule_expression     = var.nightly_migration_schedule
 }
 
 # -----------------------------------------------------------------------------
@@ -224,8 +224,8 @@ module "eventbridge" {
 module "monitoring" {
   source = "./modules/monitoring"
 
-  name_prefix             = local.name_prefix
-  kms_key_arn             = module.kms.dynamodb_key_arn
-  log_retention_days      = var.log_retention_days
-  alarm_email_recipients  = var.alarm_email_recipients
+  name_prefix            = local.name_prefix
+  kms_key_arn            = module.kms.dynamodb_key_arn
+  log_retention_days     = var.log_retention_days
+  alarm_email_recipients = var.alarm_email_recipients
 }
